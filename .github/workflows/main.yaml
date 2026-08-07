@@ -21,6 +21,7 @@ on:
           - apply
           - destroy
         default: 'plan'
+        
 permissions:
   contents: read
 
