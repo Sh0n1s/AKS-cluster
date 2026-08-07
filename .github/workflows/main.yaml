@@ -3,7 +3,10 @@ name: 'Terraform AKS Deployment'
 on:
   push:
     branches: [ "main" ]
-  pull_request: 
+    paths:
+      - '**.tf'
+      - '.github/workflows/main.yaml'
+  pull_request:
     paths:
       - '**.tf'
       - '.github/workflows/main.yaml'
@@ -18,7 +21,6 @@ on:
           - apply
           - destroy
         default: 'plan'
-
 permissions:
   contents: read
 
