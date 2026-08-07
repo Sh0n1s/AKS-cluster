@@ -4,10 +4,10 @@ resource "azurerm_resource_group" "aks_rg" {
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "my-aks-cluster"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  dns_prefix          = "myaksdns"
+  name                      = "my-aks-cluster"
+  location                  = azurerm_resource_group.aks_rg.location
+  resource_group_name       = azurerm_resource_group.aks_rg.name
+  dns_prefix                = "myaksdns"
   kubernetes_version        = "1.35"
   automatic_channel_upgrade = "patch"
 
@@ -17,6 +17,10 @@ resource "azurerm_kubernetes_cluster" "aks" {
     name       = "default"
     node_count = 2
     vm_size    = "Standard_B2s_v2"
+
+    upgrade_settings {
+      max_surge = "10%"
+    }
   }
 
   identity {
