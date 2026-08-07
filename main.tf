@@ -8,6 +8,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
   dns_prefix          = "myaksdns"
+  kubernetes_version        = "1.35"
+  automatic_channel_upgrade = "patch"
 
   oidc_issuer_enabled = true
 

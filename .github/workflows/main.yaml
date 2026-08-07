@@ -3,7 +3,10 @@ name: 'Terraform AKS Deployment'
 on:
   push:
     branches: [ "main" ]
-  pull_request:
+  pull_request: 
+    paths:
+      - '**.tf'
+      - '.github/workflows/main.yaml'
   workflow_dispatch:
     inputs:
       action:
