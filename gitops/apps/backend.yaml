@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.14.1
+    helm:
+      values: |
+        replicaCount: 1
+        ui:
+          message: "I am the BACKEND"
+          color: "#7c3434"
+        ingress:
+          enabled: true
+          className: nginx
+          hosts:
+            - host: backend.134.112.159.209.nip.io
+              paths:
+                - path: /
+                  pathType: Prefix
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
