@@ -9,6 +9,12 @@ spec:
     repoURL: https://kubernetes.github.io/ingress-nginx
     chart: ingress-nginx
     targetRevision: 4.11.0
+    helm:
+      values: |
+        controller:
+          service:
+            annotations:
+              service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
   destination:
     server: https://kubernetes.default.svc
     namespace: ingress-nginx
