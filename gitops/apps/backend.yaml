@@ -12,6 +12,8 @@ spec:
     helm:
       values: |
         replicaCount: 1
+        serviceMonitor:
+          enabled: true
         ui:
           message: "I am the BACKEND"
           color: "#7c3434"

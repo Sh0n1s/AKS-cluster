@@ -12,6 +12,8 @@ spec:
     helm:
       values: |
         replicaCount: 1
+        serviceMonitor:
+          enabled: true
         backend: http://backend-podinfo:9898/echo
         ui:
           message: "I am the FRONTEND"
