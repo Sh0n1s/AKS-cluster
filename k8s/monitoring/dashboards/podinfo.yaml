@@ -1,0 +1,204 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-podinfo
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  podinfo.json: |
+    {
+      "uid": "podinfo-red",
+      "title": "Podinfo / RED",
+      "tags": ["podinfo", "demo"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "label": "Datasource",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Targets UP",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 2 }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            { "refId": "A", "expr": "sum(up{namespace=\"demo\"})" }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Request rate",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
+          "fieldConfig": {
+            "defaults": { "unit": "reqps", "decimals": 2 },
+            "overrides": []
+          },
+          "targets": [
+            { "refId": "A", "expr": "sum(rate(http_requests_total{namespace=\"demo\"}[5m]))" }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Error rate (5xx)",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "orange", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * sum(rate(http_requests_total{namespace=\"demo\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_requests_total{namespace=\"demo\"}[5m])), 0.001)"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Rate — requests per service",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(rate(http_requests_total{namespace=\"demo\"}[5m])) by (job)",
+              "legendFormat": "{{job}}"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Duration — p95 latency",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"demo\"}[5m])) by (le, job))",
+              "legendFormat": "{{job}} p95"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Requests by endpoint",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "lineWidth": 1, "fillOpacity": 20, "stacking": { "mode": "normal" } }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(rate(http_request_duration_seconds_count{namespace=\"demo\"}[5m])) by (job, path)",
+              "legendFormat": "{{job}} · {{path}}"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Memory — working set",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"demo\",container=\"podinfo\"}) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "CPU — cores",
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "decimals": 3,
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"demo\",container=\"podinfo\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        }
+      ]
+    }
