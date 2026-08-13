@@ -58,3 +58,20 @@ jobs:
     - name: Terraform Destroy
       if: github.event_name == 'workflow_dispatch' && inputs.action == 'destroy'
       run: terraform destroy -auto-approve -input=false
+
+    - name: Notify Slack
+      if: always()
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_CICD }}
+        JOB_STATUS: ${{ job.status }}
+      run: |
+        if [ "$JOB_STATUS" = "success" ]; then
+          ICON=":white_check_mark:"
+        else
+          ICON=":red_circle:"
+        fi
+        RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+        PAYLOAD=$(jq -n --arg text \
+          "$ICON Terraform *$JOB_STATUS* on \`$GITHUB_REF_NAME\` by $GITHUB_ACTOR — <$RUN_URL|view run>" \
+          '{text: $text}')
+        curl -sS -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK"
