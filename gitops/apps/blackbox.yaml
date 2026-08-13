@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blackbox
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus-blackbox-exporter
+    targetRevision: 11.17.2
+    helm:
+      values: |
+        fullnameOverride: blackbox-exporter
+
+        replicas: 1
+
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+
+        config:
+          modules:
+            http_2xx:
+              prober: http
+              timeout: 5s
+              http:
+                valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+                follow_redirects: true
+                preferred_ip_protocol: "ip4"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

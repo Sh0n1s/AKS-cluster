@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: public-endpoints
+  namespace: monitoring
+spec:
+  jobName: blackbox-http
+  interval: 30s
+  module: http_2xx
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
+    scheme: http
+    path: /probe
+  targets:
+    staticConfig:
+      static:
+        - http://frontend.134.112.159.209.nip.io
+        - http://backend.134.112.159.209.nip.io
+      labels:
+        tier: public

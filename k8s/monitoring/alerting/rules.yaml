@@ -1,0 +1,60 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: demo-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: blackbox
+      rules:
+        - alert: EndpointDown
+          expr: probe_success == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.instance }} is unreachable"
+            description: "External probe of {{ $labels.instance }} has been failing for 2 minutes."
+
+        - alert: EndpointSlow
+          expr: probe_duration_seconds > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.instance }} is responding slowly"
+            description: "Probe takes {{ $value | printf \"%.2f\" }}s, threshold is 1s."
+
+        - alert: EndpointBadStatus
+          expr: probe_http_status_code != 200 and probe_http_status_code != 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.instance }} returns HTTP {{ $value }}"
+            description: "Expected 200, got {{ $value }} for 5 minutes."
+
+    - name: podinfo
+      rules:
+        - alert: PodinfoHighErrorRate
+          expr: |
+            100 * sum by (job) (rate(http_requests_total{namespace="demo",status=~"5.."}[5m]))
+              / clamp_min(sum by (job) (rate(http_requests_total{namespace="demo"}[5m])), 0.001) > 5
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.job }} error rate is {{ $value | printf \"%.1f\" }}%"
+            description: "More than 5% of requests return 5xx."
+
+        - alert: PodinfoHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum by (le, job) (rate(http_request_duration_seconds_bucket{namespace="demo"}[5m]))
+            ) > 0.5
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.job }} p95 latency is {{ $value | printf \"%.2f\" }}s"
+            description: "95th percentile above 0.5s for 10 minutes."
